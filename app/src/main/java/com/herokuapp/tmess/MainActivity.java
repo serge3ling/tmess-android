@@ -14,6 +14,8 @@ import android.widget.Space;
 import android.widget.TextView;
 
 import com.herokuapp.tmess.entity.Msg;
+import com.herokuapp.tmess.svc.HttpMsgAfterRead;
+import com.herokuapp.tmess.svc.HttpMsgSvc;
 import com.herokuapp.tmess.svc.MsgSvc;
 import com.herokuapp.tmess.view.MsgView;
 
@@ -22,6 +24,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private MsgSvc msgSvc = new MsgSvc();
     private MsgView msgView = new MsgView(this);
+    private HttpMsgSvc httpMsgSvc = new HttpMsgSvc();
 
     private void postScroll() {
         final View scrollView = findViewById(R.id.scroll_view);
@@ -53,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
                                 replaceAll("\\Q\n\\E", "<br/>"),
                         MsgView.MAIL,
                         "axel@tmess.d54637.com",
-                        1582664242002l
+                        1582664242002L
                         ));
 
                 LinearLayout layout = findViewById(R.id.scroll_linear);
@@ -64,8 +67,58 @@ public class MainActivity extends AppCompatActivity {
                 ((EditText) findViewById(R.id.message)).setText("");
 
                 fillInMessages();
+                //testHttpGet();
+                testHttpPost();
             }
         };
+    }
+
+    private void testHttpGet() {
+        HttpMsgAfterRead afterRead = new HttpMsgAfterRead() {
+            @Override
+            public void onRight(String answer) {
+                System.out.println("afterRead.onRight()");
+                httpMsgSvc.makeList(answer);
+            }
+            @Override
+            public void onWrong(String answer) {
+                System.out.println("afterRead.onWrong()");
+            }
+        };
+
+        String query = "?" + httpMsgSvc.paramsByTwoChattersAndTimeAfter(
+                "unga@tmess.d54637.com",
+                "axel@tmess.d54637.com",
+                19
+        );
+        if (httpMsgSvc.open(HttpMsgSvc.URL_START + query,
+                "GET", "", afterRead)) {
+            System.out.println("Opened alright.");
+            httpMsgSvc.sendAndRead();
+        }
+    }
+
+    private void testHttpPost() {
+        HttpMsgAfterRead afterRead = new HttpMsgAfterRead() {
+            @Override
+            public void onRight(String answer) {
+                System.out.println("afterRead.onRight()");
+                httpMsgSvc.makeMsg(answer);
+            }
+            @Override
+            public void onWrong(String answer) {
+                System.out.println("afterRead.onWrong()");
+            }
+        };
+
+        Msg msg = new Msg(0, "testHttpPost",
+                "axel@tmess.d54637.com", "unga@tmess.d54637.com",
+                1582764242002L);
+        if (httpMsgSvc.open(HttpMsgSvc.URL_START,
+                "POST", msg.toJsonString(), afterRead)) {
+            System.out.println("Opened alright.");
+            httpMsgSvc.sendAndRead();
+        }
     }
 
     @Override
