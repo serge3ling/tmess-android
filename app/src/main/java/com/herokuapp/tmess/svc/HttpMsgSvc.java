@@ -18,26 +18,31 @@ import java.util.List;
 
 public class HttpMsgSvc implements Runnable {
     public static final String URL_START = "https://s3spring.herokuapp.com/tMess";
+    public static final int E_NO = 0;
+    public static final int E_MALFORMED_URL = 1;
+    public static final int E_OPEN_CONNECTION = 2;
+    public static final int E_CODE_OR_INPUT_STREAM = 3;
 
     private HttpURLConnection connection;
     private HttpMsgAfterRead afterRead;
     private String sendWhat;
 
-    public boolean open(
+    public int open(
             String urlString, String method,
             String sendWhat, HttpMsgAfterRead afterRead) {
         this.sendWhat = sendWhat;
         this.afterRead = afterRead;
 
-        boolean outcome = false;
+        int outcome = E_NO;
         try {
             URL url = new URL(urlString);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
-            outcome = true;
         } catch (MalformedURLException e) {
+            outcome = E_MALFORMED_URL;
             e.printStackTrace();
         } catch (IOException e) {
+            outcome = E_OPEN_CONNECTION;
             e.printStackTrace();
         }
         return outcome;
@@ -129,11 +134,12 @@ public class HttpMsgSvc implements Runnable {
                     answer = (builder.length() > 0) ? builder.toString() : "[]";
                 } else {
                     outcome = false;
-                    answer = "Server returned code " + code + ".";
+                    answer = makeAnswer(code, "Server returned code " + code + ".");
                 }
             } catch (IOException e) {
                 outcome = false;
-                answer = "Could not get response code or read input stream.";
+                answer = makeAnswer(E_CODE_OR_INPUT_STREAM,
+                        makeAnswerText(E_CODE_OR_INPUT_STREAM));
                 e.printStackTrace();
             }
         }
@@ -145,5 +151,42 @@ public class HttpMsgSvc implements Runnable {
         }
 
         connection.disconnect();
+    }
+
+    private String makeAnswerText(int code) {
+        String outcome = "";
+
+        switch (code) {
+            case E_NO:
+                outcome = "No error.";
+                break;
+            case E_MALFORMED_URL:
+                outcome = "Malformed URL.";
+                break;
+            case E_OPEN_CONNECTION:
+                outcome = "Could not open connection.";
+                break;
+            case E_CODE_OR_INPUT_STREAM:
+                outcome = "Could not get response code or read input stream.";
+                break;
+            default:
+                outcome = "Unknown error.";
+        }
+
+        return outcome;
+    }
+
+    private String makeAnswer(int code, String text) {
+        return "{ \"code\": " + code + ", \"text\": \"" + text + "\" }";
+    }
+
+    public void go(String urlString, String method,
+                   String sendWhat, HttpMsgAfterRead afterRead) {
+        int code = open(urlString, method, sendWhat, afterRead);
+        if (code == 0) {
+            sendAndRead();
+        } else {
+            afterRead.onWrong(makeAnswer(code, makeAnswerText(code)));
+        }
     }
 }

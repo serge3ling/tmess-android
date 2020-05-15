@@ -19,10 +19,16 @@ import com.herokuapp.tmess.svc.HttpMsgSvc;
 import com.herokuapp.tmess.svc.MsgSvc;
 import com.herokuapp.tmess.view.MsgView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
-    private MsgSvc msgSvc = new MsgSvc();
+    private MsgSvc msgSvc;
     private MsgView msgView = new MsgView(this);
     private HttpMsgSvc httpMsgSvc = new HttpMsgSvc();
 
@@ -51,74 +57,14 @@ public class MainActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                msgSvc.sendMsg(new Msg(0,
-                        ((TextView) findViewById(R.id.message)).getText().toString().
-                                replaceAll("\\Q\n\\E", "<br/>"),
-                        MsgView.MAIL,
-                        "axel@tmess.d54637.com",
-                        1582664242002L
-                        ));
-
-                LinearLayout layout = findViewById(R.id.scroll_linear);
-                if (((LinearLayout) layout).getChildCount() > 0) {
-                    ((LinearLayout) layout).removeAllViews();
+                String msgText = ((TextView) findViewById(R.id.message)).getText().
+                        toString().trim().
+                        replaceAll("\\Q\n\\E", "<br/>");
+                if (msgText.length() > 0) {
+                    msgSvc.sendMsg(new Msg(0, msgText, MsgView.MAIL, MsgView.TO, 0));
                 }
-
-                ((EditText) findViewById(R.id.message)).setText("");
-
-                fillInMessages();
-                //testHttpGet();
-                testHttpPost();
             }
         };
-    }
-
-    private void testHttpGet() {
-        HttpMsgAfterRead afterRead = new HttpMsgAfterRead() {
-            @Override
-            public void onRight(String answer) {
-                System.out.println("afterRead.onRight()");
-                httpMsgSvc.makeList(answer);
-            }
-            @Override
-            public void onWrong(String answer) {
-                System.out.println("afterRead.onWrong()");
-            }
-        };
-
-        String query = "?" + httpMsgSvc.paramsByTwoChattersAndTimeAfter(
-                "unga@tmess.d54637.com",
-                "axel@tmess.d54637.com",
-                19
-        );
-        if (httpMsgSvc.open(HttpMsgSvc.URL_START + query,
-                "GET", "", afterRead)) {
-            System.out.println("Opened alright.");
-            httpMsgSvc.sendAndRead();
-        }
-    }
-
-    private void testHttpPost() {
-        HttpMsgAfterRead afterRead = new HttpMsgAfterRead() {
-            @Override
-            public void onRight(String answer) {
-                System.out.println("afterRead.onRight()");
-                httpMsgSvc.makeMsg(answer);
-            }
-            @Override
-            public void onWrong(String answer) {
-                System.out.println("afterRead.onWrong()");
-            }
-        };
-
-        Msg msg = new Msg(0, "testHttpPost",
-                "axel@tmess.d54637.com", "unga@tmess.d54637.com",
-                1582764242002L);
-        if (httpMsgSvc.open(HttpMsgSvc.URL_START,
-                "POST", msg.toJsonString(), afterRead)) {
-            System.out.println("Opened alright.");
-            httpMsgSvc.sendAndRead();
-        }
     }
 
     @Override
@@ -127,8 +73,65 @@ public class MainActivity extends AppCompatActivity {
         this.setTitle(MsgView.TO);
         setContentView(R.layout.activity_main);
 
-        LinearLayout layout = findViewById(R.id.scroll_linear);
+        final LinearLayout layout = findViewById(R.id.scroll_linear);
+        msgSvc = new MsgSvc(httpMsgSvc,
+                new HttpMsgAfterRead() {
+                    @Override
+                    public void onRight(final String answer) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    layout.addView(msgView.makeView(
+                                            Msg.makeMsg(new JSONObject(answer))
+                                    ));
+                                    msgSvc.setWorking(false);
+                                    postScroll();
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+                    }
 
+                    @Override
+                    public void onWrong(String answer) {
+                        System.out.println(answer);
+                    }
+                },
+
+                new HttpMsgAfterRead() {
+                    @Override
+                    public void onRight(final String answer) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                List<Msg> msgs = httpMsgSvc.makeList(answer);
+                                long after = 0;
+                                for (int i = 0; i < msgs.size(); i++) {
+                                    layout.addView(msgView.makeView(msgs.get(i)));
+                                    long maybeAfter = msgs.get(i).getTime();
+                                    after = Math.max(maybeAfter, after);
+                                }
+                                if (after > 0) {
+                                    msgSvc.setAfter(after);
+                                }
+                                try {
+                                    msgSvc.setWorking(false);
+                                } catch (IllegalMonitorStateException e) {}
+                                postScroll();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onWrong(String answer) {
+                        System.out.println(answer);
+                    }
+                }
+        );
+
+        /*
         ConstraintLayout constraintLayout  = new ConstraintLayout(this);
         TextView textView2 = new TextView(this);
         textView2.setId(View.generateViewId());
@@ -166,8 +169,10 @@ public class MainActivity extends AppCompatActivity {
         innerLayout.addView(space3);
         innerLayout.addView(textView3);
         layout.addView(innerLayout);
+        */
 
-        fillInMessages();
+        msgSvc.fetchLastMsgs(MsgView.MAIL, MsgView.TO/*, 0*/);
+        //msgSvc.startRunAsk();
 
         ((Button) findViewById(R.id.send)).setOnClickListener(makeSendListener());
     }

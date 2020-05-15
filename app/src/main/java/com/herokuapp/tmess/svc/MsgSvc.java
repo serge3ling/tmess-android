@@ -1,24 +1,37 @@
 package com.herokuapp.tmess.svc;
 
 import com.herokuapp.tmess.entity.Msg;
+import com.herokuapp.tmess.view.MsgView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MsgSvc {
     private List<Msg> list = new ArrayList<>();
+    private HttpMsgSvc httpMsgSvc;
+    private HttpMsgAfterRead afterPost;
+    private HttpMsgAfterRead afterGet;
+    private RunAsk runAsk;
+    private long after;
+    private boolean working = false;
 
-    public MsgSvc() {
-        list.add(new Msg(1, "Hello?",
-                "axel@tmess.d54637.com", "unga@tmess.d54637.com", 1582664192002l));
+    public MsgSvc(HttpMsgSvc httpMsgSvc,
+            HttpMsgAfterRead afterPost, HttpMsgAfterRead afterGet) {
+        this.httpMsgSvc = httpMsgSvc;
+        this.afterPost = afterPost;
+        this.afterGet = afterGet;
+
+        runAsk = new RunAsk(this);
+        /*list.add(new Msg(1, "Hello?",
+                MsgView.TO, MsgView.MAIL, 1582664192002L));
         list.add(new Msg(2, "Hey, I'm here.",
-                "unga@tmess.d54637.com", "axel@tmess.d54637.com", 1582664202002l));
+                MsgView.MAIL, MsgView.TO, 1582664202002L));
         list.add(new Msg(3, "Ready?",
-                "axel@tmess.d54637.com", "unga@tmess.d54637.com", 1582664212002l));
+                MsgView.TO, MsgView.MAIL, 1582664212002L));
         list.add(new Msg(4, "Sure.",
-                "unga@tmess.d54637.com", "axel@tmess.d54637.com", 1582664222002l));
+                MsgView.MAIL, MsgView.TO, 1582664222002L));
         list.add(new Msg(5, "Alright. <b>Let's do it</b>.",
-                "axel@tmess.d54637.com", "unga@tmess.d54637.com", 1582664232002l));
+                MsgView.TO, MsgView.MAIL, 1582664232002L));*/
     }
 
     public List<Msg> fetchMsgs() {
@@ -26,6 +39,39 @@ public class MsgSvc {
     }
 
     public void sendMsg(Msg msg) {
-        list.add(msg);
+        setWorking(true);
+        httpMsgSvc.go(HttpMsgSvc.URL_START, "POST", msg.toJsonString(), afterPost);
+    }
+
+    public void fetchLastMsgs(String chatter1, String chatter2/*, long after*/) {
+        setWorking(true);
+        String query = "?" + httpMsgSvc.paramsByTwoChattersAndTimeAfter(
+                chatter1, chatter2, after);
+        httpMsgSvc.go(HttpMsgSvc.URL_START + query,
+                "GET", "", afterGet);
+    }
+
+    public synchronized long getAfter() {
+        return after;
+    }
+
+    public synchronized void setAfter(long after) {
+        this.after = after;
+    }
+
+    public synchronized void notifyRunAsk() {
+        runAsk.notifyRunAsk();
+    }
+
+    public synchronized void startRunAsk() {
+        runAsk.startThread();
+    }
+
+    public synchronized boolean isWorking() {
+        return working;
+    }
+
+    public synchronized void setWorking(boolean working) {
+        this.working = working;
     }
 }
