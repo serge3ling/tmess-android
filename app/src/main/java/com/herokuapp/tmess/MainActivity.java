@@ -82,10 +82,9 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 try {
-                                    layout.addView(msgView.makeView(
-                                            Msg.makeMsg(new JSONObject(answer))
-                                    ));
-                                    msgSvc.setWorking(false);
+                                    Msg msg = Msg.makeMsg(new JSONObject(answer));
+                                    layout.addView(msgView.makeView(msg));
+                                    msgSvc.setAfter(msg.getTime());
                                     postScroll();
                                 } catch (JSONException e) {
                                     e.printStackTrace();
@@ -116,9 +115,6 @@ public class MainActivity extends AppCompatActivity {
                                 if (after > 0) {
                                     msgSvc.setAfter(after);
                                 }
-                                try {
-                                    msgSvc.setWorking(false);
-                                } catch (IllegalMonitorStateException e) {}
                                 postScroll();
                             }
                         });
@@ -171,8 +167,8 @@ public class MainActivity extends AppCompatActivity {
         layout.addView(innerLayout);
         */
 
-        msgSvc.fetchLastMsgs(MsgView.MAIL, MsgView.TO/*, 0*/);
-        //msgSvc.startRunAsk();
+        //msgSvc.fetchLastMsgs(MsgView.MAIL, MsgView.TO/*, 0*/);
+        msgSvc.startRunAsk();
 
         ((Button) findViewById(R.id.send)).setOnClickListener(makeSendListener());
     }

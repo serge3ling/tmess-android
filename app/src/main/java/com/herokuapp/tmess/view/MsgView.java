@@ -12,8 +12,8 @@ import com.herokuapp.tmess.R;
 import com.herokuapp.tmess.entity.Msg;
 
 public class MsgView {
-    public static final String MAIL = "unga@tmess.d54637.com";
-    public static final String TO = "axel@tmess.d54637.com";
+    public static final String MAIL = "axel@tmess.d54637.com";
+    public static final String TO = "unga@tmess.d54637.com";
     private static final float TEXT_WEIGHT = 0.8f;
 
     private final Context context;

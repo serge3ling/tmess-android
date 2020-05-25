@@ -18,6 +18,7 @@ import java.util.List;
 
 public class HttpMsgSvc implements Runnable {
     public static final String URL_START = "https://s3spring.herokuapp.com/tMess";
+    //public static final String URL_START = "https://localhost:8080/tMess";
     public static final int E_NO = 0;
     public static final int E_MALFORMED_URL = 1;
     public static final int E_OPEN_CONNECTION = 2;
@@ -26,6 +27,13 @@ public class HttpMsgSvc implements Runnable {
     private HttpURLConnection connection;
     private HttpMsgAfterRead afterRead;
     private String sendWhat;
+    private MsgSvc msgSvc;
+
+    public void setMsgSvc(MsgSvc msgSvc) {
+        if (this.msgSvc == null) {
+            this.msgSvc = msgSvc;
+        }
+    }
 
     public int open(
             String urlString, String method,
@@ -144,6 +152,7 @@ public class HttpMsgSvc implements Runnable {
             }
         }
 
+        msgSvc.setWorking(false);
         if (outcome) {
             afterRead.onRight(answer);
         } else {
@@ -183,9 +192,10 @@ public class HttpMsgSvc implements Runnable {
     public void go(String urlString, String method,
                    String sendWhat, HttpMsgAfterRead afterRead) {
         int code = open(urlString, method, sendWhat, afterRead);
-        if (code == 0) {
+        if (code == E_NO) {
             sendAndRead();
         } else {
+            msgSvc.setWorking(false);
             afterRead.onWrong(makeAnswer(code, makeAnswerText(code)));
         }
     }

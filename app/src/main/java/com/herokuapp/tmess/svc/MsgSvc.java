@@ -18,6 +18,7 @@ public class MsgSvc {
     public MsgSvc(HttpMsgSvc httpMsgSvc,
             HttpMsgAfterRead afterPost, HttpMsgAfterRead afterGet) {
         this.httpMsgSvc = httpMsgSvc;
+        httpMsgSvc.setMsgSvc(this);
         this.afterPost = afterPost;
         this.afterGet = afterGet;
 
@@ -57,10 +58,6 @@ public class MsgSvc {
 
     public synchronized void setAfter(long after) {
         this.after = after;
-    }
-
-    public synchronized void notifyRunAsk() {
-        runAsk.notifyRunAsk();
     }
 
     public synchronized void startRunAsk() {
