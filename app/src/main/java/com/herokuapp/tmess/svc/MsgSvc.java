@@ -23,16 +23,6 @@ public class MsgSvc {
         this.afterGet = afterGet;
 
         runAsk = new RunAsk(this);
-        /*list.add(new Msg(1, "Hello?",
-                MsgView.TO, MsgView.MAIL, 1582664192002L));
-        list.add(new Msg(2, "Hey, I'm here.",
-                MsgView.MAIL, MsgView.TO, 1582664202002L));
-        list.add(new Msg(3, "Ready?",
-                MsgView.TO, MsgView.MAIL, 1582664212002L));
-        list.add(new Msg(4, "Sure.",
-                MsgView.MAIL, MsgView.TO, 1582664222002L));
-        list.add(new Msg(5, "Alright. <b>Let's do it</b>.",
-                MsgView.TO, MsgView.MAIL, 1582664232002L));*/
     }
 
     public List<Msg> fetchMsgs() {

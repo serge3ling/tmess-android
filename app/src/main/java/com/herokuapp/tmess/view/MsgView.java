@@ -8,6 +8,8 @@ import android.widget.LinearLayout;
 import android.widget.Space;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
+
 import com.herokuapp.tmess.R;
 import com.herokuapp.tmess.entity.Msg;
 
@@ -35,21 +37,26 @@ public class MsgView {
     }
 
     public View makeView(Msg msg) {
+        boolean ownMsg = msg.getFrom().toLowerCase().equals(MAIL.toLowerCase());
+
         LinearLayout view = new LinearLayout(context);
         view.setOrientation(LinearLayout.HORIZONTAL);
 
         Space space = new Space(context);
         space.setLayoutParams(spaceLayoutParams);
 
-        Drawable background = context.getResources().getDrawable(R.drawable.msg_text_style);
+        Drawable background = context.getResources().getDrawable((ownMsg) ?
+                R.drawable.own_msg_text_style :
+                R.drawable.other_s_msg_text_style);
 
         TextView textView = new TextView(context);
         textView.setId(View.generateViewId());
         textView.setText(Html.fromHtml(msg.getText()));
         textView.setLayoutParams(textLayoutParams);
         textView.setBackground(background);
+        textView.setTextColor(ContextCompat.getColor(context, R.color.msgTextColor));
 
-        if (msg.getFrom().toLowerCase().equals(MAIL.toLowerCase())) {
+        if (ownMsg) {
             view.addView(space);
             view.addView(textView);
         } else {

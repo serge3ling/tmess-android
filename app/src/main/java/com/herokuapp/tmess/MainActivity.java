@@ -6,6 +6,7 @@ import androidx.constraintlayout.widget.ConstraintSet;
 
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.Html;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -57,9 +58,11 @@ public class MainActivity extends AppCompatActivity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String msgText = ((TextView) findViewById(R.id.message)).getText().
+                String msgText = Html.escapeHtml(
+                        ((TextView) findViewById(R.id.message)).getText().
                         toString().trim().
-                        replaceAll("\\Q\n\\E", "<br/>");
+                        replaceAll("\\Q\n\\E", "<br/>"));
+                System.out.println(msgText);
                 if (msgText.length() > 0) {
                     msgSvc.sendMsg(new Msg(0, msgText, MsgView.MAIL, MsgView.TO, 0));
                 }
@@ -151,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
                 0.2f
         );
         space3.setLayoutParams(space3LayoutParams);
-        Drawable background = this.getResources().getDrawable(R.drawable.msg_text_style);
+        Drawable background = this.getResources().getDrawable(R.drawable.own_msg_text_style);
         TextView textView3 = new TextView(this);
         textView3.setId(View.generateViewId());
         textView3.setText("textView3");
