@@ -31,6 +31,7 @@ public class MsgSvc {
 
     public void sendMsg(Msg msg) {
         setWorking(true);
+        System.out.println(msg.toJsonString());
         httpMsgSvc.go(HttpMsgSvc.URL_START, "POST", msg.toJsonString(), afterPost);
     }
 

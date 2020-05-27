@@ -51,7 +51,7 @@ public class MsgView {
 
         TextView textView = new TextView(context);
         textView.setId(View.generateViewId());
-        textView.setText(Html.fromHtml(msg.getText()));
+        textView.setText(Html.fromHtml(Html.fromHtml(msg.getText()).toString()));
         textView.setLayoutParams(textLayoutParams);
         textView.setBackground(background);
         textView.setTextColor(ContextCompat.getColor(context, R.color.msgTextColor));

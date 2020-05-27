@@ -62,7 +62,9 @@ public class MainActivity extends AppCompatActivity {
                         ((TextView) findViewById(R.id.message)).getText().
                         toString().trim().
                         replaceAll("\\Q\n\\E", "<br/>"));
-                System.out.println(msgText);
+                /*String msgText = ((TextView) findViewById(R.id.message)).getText().
+                                toString().trim().
+                                replaceAll("\\Q\n\\E", "<br/>");*/
                 if (msgText.length() > 0) {
                     msgSvc.sendMsg(new Msg(0, msgText, MsgView.MAIL, MsgView.TO, 0));
                 }
